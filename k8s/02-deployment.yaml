@@ -1,0 +1,48 @@
+# Deployment: mantiene 2 réplicas (pods) de la API corriendo con la imagen versionada.
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: practica2-api
+  namespace: practica2
+  labels:
+    app: practica2-api
+spec:
+  replicas: 2
+  selector:
+    matchLabels:
+      app: practica2-api          # debe coincidir con las labels del template
+  template:
+    metadata:
+      labels:
+        app: practica2-api        # el Service selecciona los pods por esta label
+        version: v1
+    spec:
+      containers:
+        - name: api
+          image: practica2-api:v1           # misma imagen construida en la Parte 1
+          imagePullPolicy: IfNotPresent     # usa la imagen local; no intenta descargarla de Docker Hub
+          ports:
+            - name: http
+              containerPort: 8080
+          env:
+            - name: ASPNETCORE_ENVIRONMENT
+              value: "Production"
+          resources:
+            requests:                       # lo mínimo que Kubernetes reserva para el pod
+              cpu: "100m"
+              memory: "128Mi"
+            limits:                         # lo máximo que el contenedor puede consumir
+              cpu: "250m"
+              memory: "256Mi"
+          readinessProbe:                   # el pod recibe tráfico solo cuando /health responde
+            httpGet:
+              path: /health
+              port: http
+            initialDelaySeconds: 5
+            periodSeconds: 10
+          livenessProbe:                    # si /health deja de responder, Kubernetes reinicia el contenedor
+            httpGet:
+              path: /health
+              port: http
+            initialDelaySeconds: 15
+            periodSeconds: 20

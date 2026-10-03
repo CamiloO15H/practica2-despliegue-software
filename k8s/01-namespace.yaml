@@ -1,0 +1,7 @@
+# Namespace propio para aislar todos los recursos de la práctica.
+apiVersion: v1
+kind: Namespace
+metadata:
+  name: practica2
+  labels:
+    app.kubernetes.io/part-of: practica2

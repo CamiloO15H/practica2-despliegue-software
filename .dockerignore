@@ -1,0 +1,14 @@
+**/bin/
+**/obj/
+**/.vs/
+**/.vscode/
+**/.idea/
+**/*.user
+**/*.swp
+.git/
+.gitignore
+k8s/
+docs/
+README.md
+Dockerfile
+.dockerignore
