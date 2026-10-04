@@ -7,7 +7,7 @@ API REST de **Productos** en .NET 8, contenerizada con **Docker** y orquestada e
 | Nombre completo | Responsabilidad |
 |---|---|
 | CAMILO OSPINA HERNAN… *(completar)* | Repositorio y README |
-| JUAN ANDRÉS RAM… *(completar)* | API REST |
+| JUAN ANDRÉS RAMIREZ CASTAÑEDA| API REST |
 | HEYNER MENA CA… *(completar)* | Docker |
 | OSCAR ALEXIS PINE… *(completar)* | Kubernetes |
 | JULIANA ARENAS ARIAS | Video, documento PDF y entrega |
