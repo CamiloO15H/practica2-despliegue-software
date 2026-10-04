@@ -1,34 +1,47 @@
-# Reflexión técnica · Práctica 2 (máximo una página)
+# Reflexión técnica · Práctica 2
 
-> Plantilla para el PDF. Reemplazar los textos entre corchetes con lo que realmente pasó. Mantener todo en una página.
+## 1. ¿Cómo abordamos el proceso de despliegue?
 
-## 1. ¿Cómo abordaron el proceso de despliegue?
+Como equipo decidimos trabajar el despliegue por etapas para poder validar cada parte antes de continuar con la siguiente. Primero desarrollamos y probamos la API REST de productos en ASP.NET Core con .NET 8, verificando desde Swagger que las operaciones de consulta, creación, actualización y eliminación funcionaran correctamente.
 
-Seguimos un camino incremental: primero la API funcionando en local con Swagger, luego la imagen Docker y por último el despliegue en Kubernetes con la misma imagen. Cada etapa se validó antes de pasar a la siguiente (`dotnet run` → `docker run` → `kubectl apply`). [Agregar detalles propios: cómo se organizaron, qué videos siguieron, en qué equipos probaron.]
+Cuando confirmamos que la API funcionaba en local, pasamos a la parte de Docker. Construimos la imagen `practica2-api:v1`, ejecutamos el contenedor utilizando el puerto 8080 y validamos que la aplicación respondiera correctamente desde Swagger y desde el endpoint `/health`.
 
-## 2. ¿Qué errores encontraron y cómo los resolvieron?
+Después utilizamos esa misma imagen para realizar el despliegue en Kubernetes local. Creamos el namespace `practica2`, el Deployment con dos réplicas y el Service de tipo NodePort. Finalmente comprobamos que los pods estuvieran en estado Running y que la API fuera accesible desde `localhost:30080`.
 
-| Error | Causa | Solución |
-|---|---|---|
-| [Ej.: Swagger no cargaba dentro del contenedor] | [El template solo lo activa en Development y el contenedor corre como Production] | [Se habilitó Swagger en todos los ambientes en Program.cs] |
-| [Ej.: pod en ImagePullBackOff] | [...] | [...] |
-| [...] | [...] | [...] |
+Esta forma de trabajar nos permitió detectar cualquier problema en una etapa antes de avanzar a la siguiente y también facilitó la distribución de responsabilidades entre los integrantes.
 
-## 3. ¿Cómo se distribuyeron las responsabilidades del equipo?
+## 2. ¿Qué errores encontramos y cómo los resolvimos?
 
-| Integrante | Responsabilidad |
-|---|---|
-| Juan Andrés | API REST (CRUD de productos y Swagger) |
-| Heyner | Dockerfile, construcción de la imagen y evidencias de Docker |
-| Oscar Alexis | Manifiestos de Kubernetes y evidencias del clúster |
-| Camilo | Repositorio, README y acceso del docente |
-| Juliana | Guion y publicación del video, consolidación del PDF y entrega |
+Durante la práctica encontramos pocos inconvenientes, ya que gran parte de la configuración funcionó correctamente desde las primeras pruebas.
 
-## 4. ¿Qué decisiones de la tecnología influyeron en el Dockerfile o el despliegue?
+Uno de los inconvenientes se presentó al ejecutar localmente la API en el equipo de Juan. El proyecto está desarrollado en .NET 8, pero en su computador tenía instalado .NET 10. Para poder ejecutar la aplicación localmente se utilizó la opción de roll-forward al runtime disponible. Esto no afectó posteriormente el trabajo con Docker, porque la imagen utiliza directamente .NET 8.
 
-- **Build multi-etapa:** el SDK de .NET (~800 MB) solo se usa para compilar; la imagen final usa el runtime `aspnet:8.0`, mucho más liviana.
-- **Restore en capa separada:** copiar primero el `.csproj` permite que Docker reutilice la caché de paquetes NuGet entre builds.
-- **Puerto 8080:** desde .NET 8 las imágenes oficiales escuchan por defecto en 8080 (no en 80), por eso `EXPOSE 8080` y `containerPort: 8080`.
-- **Usuario sin privilegios:** `USER $APP_UID`, incluido en las imágenes de .NET 8.
-- **Endpoint `/health`:** permitió configurar `readinessProbe` y `livenessProbe`, y mostrar en el video qué pod responde.
-- **Datos en memoria:** cada pod tiene su propia lista, así que los datos creados en un pod no se ven en el otro. Es aceptable para la práctica porque el objetivo es el despliegue; en producción se usaría una base de datos externa.
+También tuvimos un error al ejecutar inicialmente el comando de construcción de Docker. Se escribió `docker build -t practica2-api:v1` sin incluir el punto final, por lo que Docker indicó que faltaba especificar el contexto de construcción. Se corrigió utilizando `docker build -t practica2-api:v1 .` y la imagen se generó correctamente.
+
+En las pruebas realizadas por Heyner, Oscar Alexis y Camilo no se presentaron inconvenientes adicionales. La construcción de la imagen, los manifiestos de Kubernetes y la configuración del repositorio funcionaron correctamente durante sus respectivas validaciones.
+
+## 3. ¿Cómo distribuimos las responsabilidades del equipo?
+
+Para organizarnos mejor, dividimos la práctica de acuerdo con las diferentes etapas del despliegue.
+
+Juan Andrés se encargó del desarrollo de la API REST de productos, incluyendo las operaciones CRUD y la configuración de Swagger.
+
+Heyner trabajó con el Dockerfile, la construcción de la imagen `practica2-api:v1`, la ejecución del contenedor y la validación del endpoint `/health`.
+
+Oscar Alexis se encargó de la parte de Kubernetes, incluyendo los manifiestos, el namespace, el Deployment, el Service, la validación de los pods y el acceso a la API mediante NodePort.
+
+Camilo se encargó de organizar el repositorio, actualizar el README y documentar los comandos, los puertos utilizados y la información necesaria para reproducir el despliegue.
+
+Por mi parte (Juliana), me encargué de validar la ejecución de la API en Docker, organizar el video grupal, consolidar la información y las evidencias en el PDF y realizar la entrega final.
+
+## 4. ¿Qué decisiones de la tecnología influyeron en el Dockerfile o en el despliegue?
+
+Al trabajar con .NET 8, varias decisiones de configuración estuvieron relacionadas directamente con esta tecnología. Utilizamos un Dockerfile multi-etapa, donde primero usamos la imagen `sdk:8.0` para compilar y publicar la aplicación y posteriormente la imagen `aspnet:8.0` para ejecutar únicamente los archivos necesarios. Esto permite que la imagen final sea más liviana.
+
+También se decidió copiar primero el archivo `.csproj` antes del resto del código para aprovechar la caché de Docker durante la restauración de paquetes.
+
+La aplicación fue configurada para escuchar por el puerto 8080, por lo que este mismo puerto se utilizó dentro del contenedor y como `containerPort` en Kubernetes.
+
+Para el despliegue utilizamos la imagen versionada `practica2-api:v1`, `imagePullPolicy: IfNotPresent`, dos réplicas y valores de requests y limits de CPU y memoria. También utilizamos el endpoint `/health` para las validaciones de disponibilidad.
+
+Finalmente, la API utiliza datos almacenados en memoria. Para los objetivos de esta práctica fue suficiente, ya que el enfoque estaba en el proceso de despliegue. Sin embargo, entendimos que en una aplicación real sería necesario utilizar una base de datos externa para que todas las réplicas compartan y conserven la misma información.
