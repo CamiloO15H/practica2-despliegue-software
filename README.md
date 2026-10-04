@@ -11,7 +11,7 @@ API REST de Productos en **.NET 8**, contenerizada con **Docker** y orquestada e
 | **CAMILO OSPINA HERNAN…** *(completar)* | Repositorio y README |
 | **JUAN ANDRÉS RAM…** *(completar)* | API REST |
 | **HEYNER MENA CA…** *(completar)* | Docker |
-| **OSCAR ALEXIS PINE…** *(completar)* | Kubernetes |
+| **OSCAR ALEXIS PINEDA HENAO | Kubernetes |
 | **JULIANA ARENAS ARIAS** | Video, documento PDF y entrega |
 
 ---
